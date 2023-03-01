@@ -1,9 +1,0 @@
-import sqlalchemy as sa
-
-
-def connect(username=None,password=None,host=None,database=None):
-    """
-    Returns a sqlalchemy instance of engine. 
-    Update arguments to connect to local MySQL instance and ToxRefDB.
-    """
-    return sa.create_engine(f"""mysql+pymysql://{username}:{password}@{host}/{database}""")
