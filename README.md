@@ -2,7 +2,7 @@
 
  README
 
-* Updated: March 1, 2023
+* Updated: April 3, 2023
 * Contact: feshuk.madison@epa.gov, watford.sean@epa.gov
 
 This repository contains files to support the Toxicity Reference Database (ToxRefDB) v2.1 release as well as legacy information. The Toxicity Reference Database (ToxRefDB) contains in vivo study data from over 5900 guideline or guideline-like studies. ToxRefDB allows scientists and the interested public to access thousands of curated animal toxicity testing results, which is a great resource for many retrospective and predictive toxicology applications. 
