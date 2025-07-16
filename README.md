@@ -151,8 +151,7 @@ v3.0:
     negative_endpoint and negative_effects tables, respectively.
 
 If you would like to report a bug or have other questions related to
-ToxRefDB, please contact Madison Feshuk,
-[feshuk.madison@epa.gov](emailto:feshuk.madison@epa.gov).
+ToxRefDB, please contact Madison Feshuk, <feshuk.madison@epa.gov>.
 
 ## Disclaimer
 
