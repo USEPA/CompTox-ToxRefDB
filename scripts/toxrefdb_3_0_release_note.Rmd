@@ -1,0 +1,893 @@
+---
+title: "ToxRefDB v3.0 Release Note"
+author: "Madison Feshuk, Sean Watford, Kelly Carstens, Katie Paul Friedman"
+date: "Summer 2025"
+output:
+  html_document:
+    code_folding: hide
+    collapsed: yes
+    df_print: paged
+    lightbox: no
+    number_sections: yes
+    self_contained: yes
+    thumbnails: no
+    toc: yes
+    toc_float: yes
+---
+
+```{r packages, warning=FALSE, message=FALSE}
+rm(list=ls())
+#data load
+library(RPostgreSQL)
+library(openxlsx)
+#data formatting packages
+library(data.table)
+library(magrittr)
+library(dplyr)
+#table packages
+library(DT)
+library(htmlTable)
+library(kableExtra)
+library(tidyr)
+#plotting packages
+library(ggplot2)
+library(plotly)
+library(cowplot)
+```
+
+```{r connection, include=FALSE}
+con <- dbConnect(drv = "PostgreSQL", user="",
+                  password = "pass",
+                  host = "", db="res_toxref")
+```
+
+```{r data-load, warning=FALSE}
+new.effects <- dbGetQuery(con, "SELECT chemical.*,
+                          study.study_id,
+                          study.processed,
+                          study.study_type,
+                          study.study_year,
+                          study.study_source,
+                          study.species,
+                          study.strain_group,
+                          study.admin_route,
+                          study.admin_method,
+                          study.dose_start,
+                          study.dose_start_unit,
+                          study.dose_end,
+                          study.dose_end_unit,
+                          endpoint.endpoint_category,
+                          endpoint.endpoint_type,
+                          endpoint.endpoint_target,
+                          endpoint.endpoint_id,
+                          tg_effect.life_stage,
+                          effect.effect_id,
+                          effect.effect_desc,
+                          effect.cancer_related,
+                          tg.sex,
+                           tg.n,
+                          tg.generation,
+                          dose.dose_level,
+                          dose.conc,
+                          dose.conc_unit,
+                          dose.vehicle,
+                          dtg.dose_adjusted,
+                          dtg.dose_adjusted_unit,
+                          dtg_effect.*
+                          FROM 
+                          ((((((((prod_toxrefdb_3_0.chemical 
+                          INNER JOIN prod_toxrefdb_3_0.study ON chemical.chemical_id=study.chemical_id)
+                          INNER JOIN prod_toxrefdb_3_0.dose ON dose.study_id=study.study_id)
+                          INNER JOIN prod_toxrefdb_3_0.tg ON tg.study_id=study.study_id)
+                          INNER JOIN prod_toxrefdb_3_0.dtg ON tg.tg_id=dtg.tg_id AND dose.dose_id=dtg.dose_id)
+                          INNER JOIN prod_toxrefdb_3_0.tg_effect ON tg.tg_id=tg_effect.tg_id)
+                          LEFT OUTER JOIN prod_toxrefdb_3_0.dtg_effect ON tg_effect.tg_effect_id=dtg_effect.tg_effect_id AND dtg.dtg_id=dtg_effect.dtg_id)
+                          LEFT OUTER JOIN prod_toxrefdb_3_0.effect ON effect.effect_id=tg_effect.effect_id)
+                          INNER JOIN prod_toxrefdb_3_0.endpoint ON endpoint.endpoint_id=effect.endpoint_id) 
+                          where study.processed= TRUE ;") %>% 
+  data.table()
+
+new.wo.effects <- dbGetQuery(con, "SELECT chemical.*,
+                          study.study_id,
+                          study.processed,
+                          study.study_type,
+                          study.study_year,
+                          study.study_source,
+                          study.species,
+                          study.strain_group,
+                          study.admin_route,
+                          study.admin_method,
+                          study.dose_start,
+                          study.dose_start_unit,
+                          study.dose_end,
+                          study.dose_end_unit,
+                          endpoint.endpoint_category,
+                          endpoint.endpoint_type,
+                          endpoint.endpoint_target,
+                          endpoint.endpoint_id,
+                          tg_effect.life_stage,
+                          effect.effect_id,
+                          effect.effect_desc,
+                          effect.cancer_related,
+                          tg.sex,
+                           tg.n,
+                          tg.generation,
+                          dose.dose_level,
+                          dose.conc,
+                          dose.conc_unit,
+                          dose.vehicle,
+                          dtg.dose_adjusted,
+                          dtg.dose_adjusted_unit,
+                          dtg.mg_kg_day_value,
+                          dtg_effect.*
+                          FROM 
+                          ((((((((prod_toxrefdb_3_0.chemical 
+                          LEFT JOIN prod_toxrefdb_3_0.study ON chemical.chemical_id=study.chemical_id)
+                          LEFT JOIN prod_toxrefdb_3_0.dose ON dose.study_id=study.study_id)
+                          LEFT JOIN prod_toxrefdb_3_0.tg ON tg.study_id=study.study_id)
+                          LEFT JOIN prod_toxrefdb_3_0.dtg ON tg.tg_id=dtg.tg_id AND dose.dose_id=dtg.dose_id)
+                          LEFT JOIN prod_toxrefdb_3_0.tg_effect ON tg.tg_id=tg_effect.tg_id)
+                          LEFT JOIN prod_toxrefdb_3_0.dtg_effect ON tg_effect.tg_effect_id=dtg_effect.tg_effect_id AND dtg.dtg_id=dtg_effect.dtg_id)
+                          LEFT JOIN prod_toxrefdb_3_0.effect ON effect.effect_id=tg_effect.effect_id)
+                          LEFT JOIN prod_toxrefdb_3_0.endpoint ON endpoint.endpoint_id=effect.endpoint_id)
+                          where study.processed=TRUE ;") %>% 
+  data.table()
+
+old.effects <- dbGetQuery(con, "SELECT chemical.preferred_name,
+                          study.chemical_id,
+                          study.study_id,
+                          study.processed,
+                          study.study_type,
+                          study.study_year,
+                          study.study_source,
+                          study.species,
+                          study.strain,
+                          study.strain_group,
+                          study.admin_route,
+                          study.admin_method,
+                          study.substance_purity,
+                          study.dose_start,
+                          study.dose_start_unit,
+                          study.dose_end,
+                          study.dose_end_unit,
+                          study.study_citation,
+                          endpoint.endpoint_category,
+                          endpoint.endpoint_type,
+                          endpoint.endpoint_target,
+                          endpoint.endpoint_id,
+                          tg_effect.life_stage,
+                          tg_effect.effect_desc_free,
+                          tg_effect.no_quant_data_reported,
+                          effect.effect_id,
+                          effect.effect_desc,
+                          effect.cancer_related,
+                          tg.sex,
+                          tg.generation,
+                          tg.n,
+                          tg.dose_duration, 
+                          tg.dose_duration_unit,
+                          dose.dose_level,
+                          dose.conc,
+                          dose.conc_unit,
+                          dose.vehicle,
+                          dose.dose_comment,
+                          dtg.dose_adjusted,
+                          dtg.dose_adjusted_unit,
+                          dtg.mg_kg_day_value,
+                          dtg_effect.*
+                          FROM ((((((((prod_toxrefdb_2_1.chemical 
+                          INNER JOIN prod_toxrefdb_2_1.study ON
+                          chemical.chemical_id=study.chemical_id)
+                          INNER JOIN prod_toxrefdb_2_1.dose ON dose.study_id=study.study_id)
+                          INNER JOIN prod_toxrefdb_2_1.tg ON tg.study_id=study.study_id)
+                          INNER JOIN prod_toxrefdb_2_1.dtg ON tg.tg_id=dtg.tg_id AND dose.dose_id=dtg.dose_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.tg_effect ON tg.tg_id=tg_effect.tg_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.dtg_effect ON tg_effect.tg_effect_id=dtg_effect.tg_effect_id AND dtg.dtg_id=dtg_effect.dtg_id)
+                          INNER JOIN prod_toxrefdb_2_1.effect ON effect.effect_id=tg_effect.effect_id)
+                          INNER JOIN prod_toxrefdb_2_1.endpoint ON  endpoint.endpoint_id=effect.endpoint_id) 
+                          where study.processed= TRUE ;") %>% 
+  data.table()
+
+old.wo.effects <- dbGetQuery(con, "SELECT chemical.preferred_name,
+                          study.chemical_id,
+                          study.study_id,
+                          study.processed,
+                          study.study_type,
+                          study.study_year,
+                          study.study_source,
+                          study.species,
+                          study.strain,
+                          study.strain_group,
+                          study.admin_route,
+                          study.admin_method,
+                          study.substance_purity,
+                          study.dose_start,
+                          study.dose_start_unit,
+                          study.dose_end,
+                          study.dose_end_unit,
+                          study.study_citation,
+                          endpoint.endpoint_category,
+                          endpoint.endpoint_type,
+                          endpoint.endpoint_target,
+                          endpoint.endpoint_id,
+                          tg_effect.life_stage,
+                          tg_effect.effect_desc_free,
+                          tg_effect.no_quant_data_reported,
+                          effect.effect_id,
+                          effect.effect_desc,
+                          effect.cancer_related,
+                          tg.sex,
+                          tg.generation,
+                          tg.n,
+                          tg.dose_duration, 
+                          tg.dose_duration_unit,
+                          dose.dose_level,
+                          dose.conc,
+                          dose.conc_unit,
+                          dose.vehicle,
+                          dose.dose_comment,
+                          dtg.dose_adjusted,
+                          dtg.dose_adjusted_unit,
+                          dtg_effect.*
+                          FROM ((((((((prod_toxrefdb_2_1.chemical
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.study ON chemical.chemical_id=study.chemical_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.dose ON dose.study_id=study.study_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.tg ON tg.study_id=study.study_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.dtg ON tg.tg_id=dtg.tg_id AND dose.dose_id=dtg.dose_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.tg_effect ON tg.tg_id=tg_effect.tg_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.dtg_effect ON tg_effect.tg_effect_id=dtg_effect.tg_effect_id AND dtg.dtg_id=dtg_effect.dtg_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.effect ON effect.effect_id=tg_effect.effect_id)
+                          LEFT OUTER JOIN prod_toxrefdb_2_1.endpoint ON endpoint.endpoint_id=effect.endpoint_id) 
+                          where study.processed= TRUE ;")
+
+study_all <- dbGetQuery(con, "SELECT * from prod_toxrefdb_3_0.study;") %>% 
+  data.table()
+study <- dbGetQuery(con, "SELECT * from prod_toxrefdb_3_0.study where processed=TRUE;") %>% 
+  data.table()
+chemical <- dbGetQuery(con, "SELECT * from prod_toxrefdb_3_0.chemical;") %>% 
+  data.table()
+```
+
+# Introduction
+
+<a href="https://www.epa.gov/comptox-tools/downloadable-computational-toxicology-data#AT"><img src="C:/Users/mfeshuk/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/ToxRef-Internal/ToxRefDB_misc/v3_0_files/img/toxrefdb.png" width="300" align="right" style="float: right; margin-left: 10px; margin-bottom: 10px;"/></a>
+
+The Toxicity Reference Database (ToxRefDB) serves as a resource for structured animal toxicity data for many retrospective and predictive toxicology applications. ToxRefDB contains in vivo study data from over 6000 guideline or guideline-like human health relevant studies for over 1000 chemicals. The goal of ToxRefDB is to provide a public database that better supports the needs of predictive toxicology by increasing the qualitative and quantitative information available and by facilitating the interoperability of legacy in vivo hazard information with other tools and databases. 
+
+For more comprehensive documentation on the development of the database and curation practices, consult the ToxRefDB User Guide or past publications. The purpose of this release note is to summarize and explore data  available in ToxRefDB v3.0. 
+
+## Overview
+
+The study types covered in ToxRefDB include repeat dose study designs utilizing various administration routes (predominantly oral) namely:
+
+- chronic (CHR; typically 1-2 year exposures depending on species and study design) conducted predominantly in rats, mice, and dogs;
+-	subchronic (SUB; 90 day exposures) conducted predominantly in rats, mice, and dogs;
+-	subacute (SAC; 14-28 day exposures depending on the source and guideline) conducted predominantly in rats, mice, and dogs;
+-	prenatal developmental (DEV) conducted predominantly in rats and rabbits;
+-	multigeneration reproductive toxicity studies (MGR) conducted predominantly in rats;
+-	reproductive (REP) toxicity studies conducted largely in rats;
+-	developmental neurotoxicity (DNT) studies conducted predominantly in rats;
+
+and a small number of studies with designs characterized as acute (ACU), neurological (NEU), or “other” (OTH).
+
+Many of the studies (`r length(unique(study[study_source =="opp_der",]$study_id))`) come from registrant-submitted toxicity studies known as data evaluation records (DERs) from the U.S. EPA’s Office of Pesticide Programs (OPP).  Accordingly, the majority of chemicals in the database are categorized as pesticides. Ongoing curation efforts since 2009 have expanded ToxRefDB to incorporate toxicity studies from ten additional sources, including the National Toxicology Program (NTP), peer-reviewed primary research articles (OpenLit), and pharmaceutical pre-clinical toxicity studies (Pfizer, Sanofi, GSK, Merck), among others (RIVM, PMRA, unpublished and unassigned sources). These efforts have broadened the chemical coverage of the database beyond pesticides.
+
+ToxRefDB serves as a resource for study design, quantitative dose response, and endpoint testing status information given guideline specifications from the US Environmental Protection Agency (US EPA) and the National Toxicology Program (NTP) headquartered at the National Institute of Environmental Health Sciences. The legacy and current data curation workflow is described in more detail in later sections. An important component of ToxRefDB is its controlled vocabulary for studies and effects observed for enhanced data quality.
+
+## History
+The first version of ToxRefDB (ToxRefDB v1.0) was initially released as a series of spreadsheets, which are still available on EPA’s FTP site and referenced in FigShare (https://doi.org/10.23645/epacomptox.6062545.v1). ToxRefDB underwent significant updates, including extraction of quantitative (i.e. dose-response) data, that  that are described in [Watford et al.(2019)](https://doi.org/10.1016/j.reprotox.2019.07.012) and was released as ToxRefDB v2.0. ToxRefDB v2.0 and its associated summary files can be found here: https://doi.org/10.23645/epacomptox.6062545.v3. 
+
+ToxRefDB v2.1 represented a minor update of ToxRefDB v2.0 to address issues discovered with the compilation script that caused some extracted values, notably toxicity effects, not to import properly from the original MS AccessDB curation files, such as failure to import some effects. Although the overall total number of studies and chemicals remained unchanged, the v2.1 update included additional data as previously curated studies with extracted dose treatment groups and effects were made fully accessible. The additional data improved the utility of ToxRefDB as a resource for curated legacy in vivo information by providing more complete information of the past animal studies conducted. The minor update was described in the [Feshuk et al. (2023)](https://www.frontiersin.org/articles/10.3389/ftox.2023.1260305/full) publication, and ToxRefDB v2.1 and its associated summary files can be found here: https://doi.org/10.23645/epacomptox.6062545.v4. 
+
+# Summary of ToxRefDB v3.0 {.tabset .tabset-fade .tabset-pills}
+
+ToxRefDB v3.0 contains summary information from `r length(unique(study_all$study_id))` guideline or guideline-like human health relevant studies for over `r length(unique(study_all$chemical_id))`. The quantitative (i.e. dose-response) data has now been completed for `r length(unique(study$study_id))` studies (indicated with processed=TRUE) with plans to extract and release the remaining data in subsequent database versions.
+
+ToxRefDB v3.0 represents the next iteration of the ToxRefDB project featuring several key updates:
+
+- **Improved Curation Workflow**: New data in ToxRefDB v3.0 was curated using an application-driven workflow. The Data Collection Tool (DCT), an Oracle APEX software, was developed and utilized to support continued curation efforts. In the future, [Health Assessment Workspace Collaborative (HAWC)](https://www.epa.gov/risk/health-assessment-workspace-collaborative-hawc) is anticipated to be leveraged to support ToxRefDB curation, data access, and visualization.
+- **Vocabulary Expansion for New Study Type**: Expanded controlled vocabulary and a new guideline profile was curated to capture the OPPTS 870.6300 developmental neurotoxicity (DNT) guideline and “non-guideline” studies.
+- **MySQL --> PostgreSQL Migration**: The database was migrated from MySQL into PostgreSQL format.
+- **New Study Extractions**: Data extraction from source documents (e.g. OPP DERs and NTP PFAS reports (TOX-96 and TOX-97))  expanded both the chemical and study coverage of ToxRefDB.
+- **Improved Data Provenance**: Source chemical information was added as new JSON column with confirmed DSSTox Substance Identifiers (DTXSIDs) mappings stored in the chemical table.
+- **Improved Citation Management**: NTP source report identifiers were added as ToxRefDB study source ids. Efforts are underway to expand Health and Environmental Research Online database (HERO) interoperability for improved citation management.
+- **Quality Control**:	Quality assurance, such as vocabulary standardization to continue to provide more detailed effect and study-level information allowing for a more streamlined, interoperable database efforts. Errors were identified for systematic correction, such as non-standard values in free-text fields and effect size comparisons to flag poorly extracted data.
+
+The .sql export of ToxRefDB 3.0 and summary files are available for public download here: https://clowder.edap-cluster.com/datasets/61147fefe4b0856fdc65639b#folderId=6850327be4b096bca8848301
+
+Herein we provide the reader with a summary of the scope and coverage of the database. ToxRefDB was filtered to present only data where a full curation with guideline profile observations was complete. This is achieved using a ‘processed’ flag set to `TRUE` within the study table.
+
+## Changes between ToxRefDB v2.1 to v3.0
+
+The following table details a summary of differences between ToxRefDB v2.1 and v3.0. ToxRefDB v3.0 contains summary information from 6341 guideline or guideline-like human health relevant studies for 1228 chemicals. As part of the ToxRefDB 2.0 update, quantitative (i.e. dose-response) data were extracted. For v3.0, this curation has been completed for 4320 studies and 849 chemicals (indicated with processed=TRUE) with plans to extract and release the remaining data in subsequent database versions.
+
+```{r version-comparisons, warning=FALSE}
+unique_new_effects<- unique(new.effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+unique_old_effects<- unique(old.effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+
+critical_new_effects <- new.effects[new.effects$critical_effect==1,]  
+critical_new_effects<- unique(critical_new_effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )])
+critical_old_effects <- old.effects[old.effects$critical_effect==1,]  
+critical_old_effects<- unique(critical_old_effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+
+
+Output <- c("Total number of studies with complete curation", 
+            "Number of studies with extracted effects",
+            "Total number of chemicals", 
+            "Total database rows, including studies with no extracted effects", 
+            "Total effects extracted", 
+            "Dose treatment groups with effects", 
+            "Unique effects: Cholinesterase endpoint category", 
+            "Unique effects: Developmental endpoint category", 
+            "Unique effects: Reproductive endpoint category", 
+            "Unique effects: Systemic endpoint category",
+            "Unique effects: Neurological endpoint category",
+            "Unique critical effects: Cholinesterase endpoint category", 
+            "Unique critical effects: Developmental endpoint category", 
+            "Unique critical effects: Reproductive endpoint category", 
+            "Unique critical effects: Systemic endpoint category", 
+            "Unique critical effects: Neurological endpoint category")
+
+v3.0 <- c(length(unique(new.wo.effects$study_id)),
+          length(unique(new.effects$study_id)), 
+          length(unique(new.wo.effects$chemical_id)),
+          nrow(new.wo.effects), 
+          nrow(new.effects),
+          length(unique(new.effects$dtg_id)), 
+          nrow(unique_new_effects[endpoint_category=="cholinesterase",]), 
+          nrow(unique_new_effects[endpoint_category=="developmental",]),
+          nrow(unique_new_effects[endpoint_category=="reproductive",]),
+          nrow(unique_new_effects[endpoint_category=="systemic",]), 
+          nrow(unique_new_effects[endpoint_category=="neurological",]),
+          nrow(critical_new_effects[endpoint_category=="cholinesterase",]), 
+          nrow(critical_new_effects[endpoint_category=="developmental",]),
+          nrow(critical_new_effects[endpoint_category=="reproductive",]),
+          nrow(critical_new_effects[endpoint_category=="systemic",]),
+          nrow(critical_new_effects[endpoint_category=="neurological",]))
+
+v2.1 <- c(length(unique(old.wo.effects$study_id)),
+          length(unique(old.effects$study_id)), 
+          length(unique(old.wo.effects$chemical_id)),
+          nrow(old.wo.effects), 
+          nrow(old.effects),  
+          length(unique(old.effects$dtg_id)), 
+          nrow(unique_old_effects[endpoint_category=="cholinesterase",]), 
+          nrow(unique_old_effects[endpoint_category=="developmental",]),
+          nrow(unique_old_effects[endpoint_category=="reproductive",]),
+          nrow(unique_old_effects[endpoint_category=="systemic",]), 
+          nrow(unique_old_effects[endpoint_category=="neurological",]),
+          nrow(critical_old_effects[endpoint_category=="cholinesterase",]), 
+          nrow(critical_old_effects[endpoint_category=="developmental",]),
+          nrow(critical_old_effects[endpoint_category=="reproductive",]),
+          nrow(critical_old_effects[endpoint_category=="systemic",]),
+          nrow(critical_old_effects[endpoint_category=="neurological",]))
+
+
+Change <- v3.0-v2.1
+Table <- data.frame(Output, v2.1, v3.0, Change)
+
+datatable(Table,
+          filter='top', 
+          options=list(pageLength = 16,searching=FALSE, autoWidth=FALSE,  scrollX=TRUE, initComplete = JS(
+    "function(settings, json) {",
+    "$('body').css({'font-family': 'Calibri'});",
+    "}"
+  )))
+  
+```
+Treatment-related effects define the lowest effect levels (LELs) and no effect levels (NELs); these effects are simply treatment-related and significantly different from control. In contrast, toxicological opinion informs selection of a critical effect designation to define the lowest observable adverse effect and no observable adverse effect levels (LOAELs, NOAELs).
+
+## Summary of Coverage 
+
+A summary table presents the number of chemicals and number of studies for each study source, study type, and species. Study type abbreviations are as follows: CHR = Chronic, DEV = Prenatal-Developmental, MGR = Multigeneration Reproductive, SAC = Subacute, SUB = Subchronic, DNT = Developmental Neurotoxicity, NON=Non-guideline.
+
+```{r v3.0-summary-table, warning=FALSE, message=FALSE}
+
+#-----------------------------------------------------------------------------------#
+# Create summary statistics table of study information in toxrefdb v3.0 
+#-----------------------------------------------------------------------------------#
+
+#### select and group target information for table
+counts <- study 
+
+#### adjust level names of study_source to reflect published table's names
+# rename every study source which begins with "pharma_" to "Pharma"
+counts$study_source<-gsub("pharma[^ ]*", "Pharma", counts$study_source)
+# change other study_source names
+'%notin%' <- Negate('%in%') 
+counts <- counts %>% 
+  mutate(study_source = replace(study_source, study_source == "ntp", "NTP")) %>%
+  mutate(study_source = replace(study_source, study_source == "open_lit", "OpenLit")) %>%
+  mutate(study_source = replace(study_source, study_source == "opp_der", "OPP DER")) %>%
+  mutate(study_source = replace(study_source, study_source %notin% c("Pharma", "NTP", "OpenLit", "OPP DER"), "Other"))
+
+counts <- counts %>%
+  group_by(study_type, study_source, species) %>%
+  summarize(n_studies = n_distinct(study_id), n_chems = n_distinct(chemical_id))
+  
+
+#### for each study type, extract its rows and calculate its totals for studies and chemicals
+
+#subset counts by study type
+CHR <- as.data.frame(counts[which(counts$study_type=="CHR"),])
+DEV <- as.data.frame(counts[which(counts$study_type=="DEV"),])
+MGR <- as.data.frame(counts[which(counts$study_type=="MGR"),])
+SAC <- as.data.frame(counts[which(counts$study_type=="SAC"),])
+SUB <- as.data.frame(counts[which(counts$study_type=="SUB"),])
+DNT <- as.data.frame(counts[which(counts$study_type=="DNT"),])
+NON <- as.data.frame(counts[which(counts$study_type=="NON"),])
+
+# vector of study type names
+s.type.char <- as.vector(unique(counts$study_type)) 
+# counts data broken into a list by study type. Calling as.data.frame on an 
+# element of this list will produce a data frame for all data from counts for the
+# study type which corresponds to that element.
+s.type.obj <- lapply(s.type.char, function(s) eval(parse(text=s)))  
+# character vector of object names for the totals rows of each study type
+totName<-paste(s.type.char, "t", sep=".")
+# empty data frame to populate with data frames and totals rows of each study type
+counts2<-as.data.frame(NULL)
+
+for(i in 1:length(s.type.char)){
+  # create a totals row for each study type with totals for studies and chemicals
+  assign(totName[i], 
+         c(paste("Total", s.type.char[i], sep = " "), 
+           "", 
+           "",
+           n_distinct(study[which(study_type==s.type.char[i]),]$study_id), 
+           n_distinct(study[which(study_type==s.type.char[i]),]$chemical_id)), 
+         .GlobalEnv)
+  # append each study's count data and totals row to a data frame combining those of all studies
+  counts2 <- rbind(counts2, rbind(as.data.frame(s.type.obj[i]), eval(parse(text=totName[i])))) 
+}
+
+# create row for database totals for studies and chemicals, then append to counts2 data frame
+dbtot <- c("Database totals", "", "", n_distinct(study$study_id), n_distinct(study$chemical_id))
+counts2 <- rbind(counts2, dbtot)        
+
+#### build table of combined data frame
+table_dt <- counts2
+kbl(table_dt, 
+    col.names = c("Study Type", "Study Source", "Species", "Number of studies", "Number of chemicals"), 
+    align = "c") %>%
+  kable_paper(full_width = F) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 1:2, valign = "top") %>%
+  footnote(general = "CHR = Chronic, DEV = Prenatal-Developmental, DNT = Developmental Neurotoxicity, MGR = Multigeneration Reproductive, NON = NON-Guideline, SAC = Subacute, SUB = Subchronic", general_title = "")
+  
+```
+
+68 DNT DER extractions from ToxRefDB v1.0 (processed==0) were removed in favor of new full extractions. These study ids include: 4901,4900,4774,4748,4737,4773,4790,4802,4786,4796,4723,4727,4732,4754,4498,4762,4507,4738,4903,4492,2956,4724,4425,4484,4469,4745,4464,4525,2642,3216,4731,1447,4788,2346,1455,4760,4739,4450,3157,4426, 4021,4726,4471,4473,4485,378,1194,4479,4495,2166,4799,2532,4761,137,2022,3811,4020,4477,3411,2157,1584,955,4783,3891,3747,4497,4496, 2975
+
+## Study-Level Visuals
+
+A breakdown of studies by study type, species, and study source is shown:
+
+```{r study-landscape, out.width="100%", warning=FALSE}
+
+#### select and group target information for table
+counts <- study 
+
+#### adjust level names of study_source to reflect published table's names
+# rename every study source which begins with "pharma_" to "Pharma"
+counts$study_source<-gsub("pharma[^ ]*", "Pharma", counts$study_source)
+# change other study_source names
+'%notin%' <- Negate('%in%') 
+counts <- counts %>% 
+  mutate(study_source = replace(study_source, study_source == "ntp", "NTP")) %>%
+  mutate(study_source = replace(study_source, study_source == "open_lit", "OpenLit")) %>%
+  mutate(study_source = replace(study_source, study_source == "opp_der", "OPP DER")) %>%
+  mutate(study_source = replace(study_source, study_source %notin% c("Pharma", "NTP", "OpenLit", "OPP DER"), "Other"))
+
+#### dataframe with study type counts
+counts.st <- counts %>%
+  group_by(study_type) %>%
+  summarize(n_studies = n_distinct(study_id), n_chems = n_distinct(chemical_id))
+
+#### dataframe with species counts
+counts.sp <- counts %>%
+  group_by(species) %>%
+  summarize(n_studies = n_distinct(study_id), n_chems = n_distinct(chemical_id))
+
+#### dataframe with study source counts
+counts.ss <- counts %>%
+  group_by(study_source) %>%
+  summarize(n_studies = n_distinct(study_id), n_chems = n_distinct(chemical_id))
+
+#### study-level (study counts) frequency bar plot for study type, species, and study source
+
+study.st <- ggplot(data=counts.st, aes(x=reorder(factor(study_type), -n_studies), y=n_studies)) +
+  geom_bar(stat="identity", fill="aquamarine3") +
+  theme_minimal() +
+  labs(title="Study Type", x="Study Type", y="Number of studies") +
+  geom_text(aes(label=n_studies), vjust = -0.3, size=2) +
+  ylim(0, max(counts.st$n_studies)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, vjust=1.2, hjust=1),
+        aspect.ratio = 4/2)
+
+study.sp <- ggplot(data=counts.sp, aes(x=reorder(factor(species), -n_studies), y=n_studies)) +
+  geom_bar(stat="identity", fill="aquamarine3") +
+  theme_minimal()  +
+  labs(title="Species", x="Species", y="Number of studies") +
+  geom_text(aes(label=n_studies), vjust = -0.3, size=2) +
+  ylim(0, max(counts.sp$n_studies)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, hjust=1),
+        aspect.ratio = 4/2)
+
+study.ss <- ggplot(data=counts.ss, aes(x=reorder(factor(study_source), -n_studies), y=n_studies)) +
+  geom_bar(stat="identity", fill="aquamarine3") +
+  theme_minimal() +
+  labs(title="Study Source", x="Study Source", y="Number of studies") +
+  geom_text(aes(label=n_studies), vjust = -0.3, size=2) +
+  ylim(0, max(counts.ss$n_studies)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, hjust=1),
+        aspect.ratio = 4/2)
+
+#### all study-level plots together
+plot_grid(study.st, study.sp, study.ss, ncol=3, label_size = 14)
+
+```
+
+## Chemical-Level Visuals
+
+A breakdown of chemicals by study type, species, and study source is shown:
+
+```{r chem-landscape, out.width="100%", warning=FALSE}
+
+#### chemical-level (chemical counts) frequency bar plot
+chem.st <- ggplot(data=counts.st, aes(x=reorder(factor(study_type), -n_chems), y=n_chems)) +
+  geom_bar(stat="identity", fill="darksalmon") +
+   theme_minimal() +
+  labs(title="Study Type", x="Study Type", y="number of chemicals") +
+  geom_text(aes(label=n_chems), vjust = -0.3, size=2) +
+  ylim(0, max(counts.st$n_chems)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, vjust=1.2, hjust=1),
+        aspect.ratio = 4/2)
+
+chem.sp <- ggplot(data=counts.sp, aes(x=reorder(factor(species), -n_chems), y=n_chems)) +
+  geom_bar(stat="identity", fill="darksalmon") +
+   theme_minimal() +
+  labs(title="Species", x="Species", y="Number of chemicals") +
+  geom_text(aes(label=n_chems), vjust = -0.3, size=2) +
+  ylim(0, max(counts.sp$n_chems)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, hjust=1),
+        aspect.ratio = 4/2)
+
+chem.ss <- ggplot(data=counts.ss, aes(x=reorder(factor(study_source), -n_chems), y=n_chems)) +
+  geom_bar(stat="identity", fill="darksalmon") +
+   theme_minimal() +
+  labs(title="Study Source", x="Study Source", y="Number of chemicals") +
+  geom_text(aes(label=n_chems), vjust = -0.3, size=2) +
+  ylim(0, max(counts.ss$n_chems)*1.1) +
+  theme(plot.title = element_text(size=10),
+        axis.text.x=element_text(angle=45, hjust=1),
+        aspect.ratio = 4/2)
+ 
+#### all chemical-level plots together
+plot_grid(chem.st, chem.sp, chem.ss, ncol=3, label_size = 14)
+
+```
+
+## Chemical List
+
+A list of chemicals included in ToxRefDB with associated study types:
+
+```{r chemical-list, warning=FALSE}
+inspect <- distinct(study, study_id, chemical_id, study_type)
+chemlist <- inspect %>% group_by(chemical_id) %>% summarise(val=paste(unique(study_type), collapse=", "), count=length(unique(study_id)))
+chemlist2 <- merge(chemical, chemlist, by="chemical_id")
+
+chemlist2$chemical_id <- NULL
+setnames(chemlist2, "val", "study_type")
+
+datatable(chemlist2, 
+          filter='top', 
+          options=list(pagelength=25, autoWidth=FALSE,  scrollX=TRUE, initComplete = JS(
+    "function(settings, json) {",
+    "$('body').css({'font-family': 'Calibri'});",
+    "}"
+  )))
+```
+
+# Reviewing DNT Data 
+
+A major update in ToxRefDB v3.0 was the addition of a  Developmental Neurotoxicity study (DNT) vocabulary and guideline profiles to support the extraction of DNT and non-guideline DNT-relevant studies. 
+
+A Developmental Neurotoxicity (DNT) study assesses behavioral and neurobiological parameters in order to ascertain the effects of chemicals on the developing animal. The rodent DNT study paradigm has evolved over time with the most recent test guidelines updated in 2007 with the introduction of OECD guideline 426. In vivo DNT study data could inform benchmarking for new approach methods for DNT and also help characterize what has been learned from available DNT studies. To establish a resource of in vivo DNT data, a new vocabulary and list of required observations (i.e. guideline profile) was first developed according to the 870.6300 DNT guideline. A standardized term list ensures data can be consistently extracted across studies.
+
+The following section presents a summary of this added data.
+
+## DNT versus Non-Guideline Extractions
+
+The following table summarizes the DNT and non-guideline curations, which were added in ToxRefDB v3.0. 
+
+```{r DNT-NON-comparisons, warning=FALSE}
+unique_DNT_effects<- unique(new.effects[new.effects$study_type=="DNT", c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+unique_NON_effects<- unique(new.effects[new.effects$study_type=="NON",c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+
+critical_DNT_effects <- new.effects[new.effects$critical_effect==1 & new.effects$study_type=="DNT",]  
+critical_DNT_effects<- unique(critical_DNT_effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )])
+critical_NON_effects <- new.effects[new.effects$critical_effect==1 & new.effects$study_type=="NON",]  
+critical_NON_effects<- unique(critical_NON_effects[,c("dtg_id", "endpoint_category", "endpoint_type", "endpoint_target", "effect_desc" )]) 
+
+
+Output <- c("Total number of studies with complete curation", 
+            "Number of studies with extracted effects",
+            "Total number of chemicals", 
+            "Total database rows, including studies with no extracted effects", 
+            "Total effects extracted", 
+            "Dose treatment groups with effects", 
+            "Unique effects: Cholinesterase endpoint category", 
+            "Unique effects: Developmental endpoint category", 
+            "Unique effects: Reproductive endpoint category", 
+            "Unique effects: Systemic endpoint category",
+            "Unique effects: Neurological endpoint category",
+            "Unique critical effects: Cholinesterase endpoint category", 
+            "Unique critical effects: Developmental endpoint category", 
+            "Unique critical effects: Reproductive endpoint category", 
+            "Unique critical effects: Systemic endpoint category", 
+            "Unique critical effects: Neurological endpoint category")
+
+DNT <- c(length(unique(new.wo.effects[study_type=="DNT",]$study_id)),
+          length(unique(new.effects[study_type=="DNT",]$study_id)), 
+          length(unique(new.wo.effects[study_type=="DNT",]$chemical_id)),
+          nrow(new.wo.effects[study_type=="DNT",]), 
+          nrow(new.effects[study_type=="DNT",]),
+          length(unique(new.effects[study_type=="DNT",]$dtg_id)), 
+          nrow(unique_DNT_effects[endpoint_category=="cholinesterase",]), 
+          nrow(unique_DNT_effects[endpoint_category=="developmental",]),
+          nrow(unique_DNT_effects[endpoint_category=="reproductive",]),
+          nrow(unique_DNT_effects[endpoint_category=="systemic",]), 
+          nrow(unique_DNT_effects[endpoint_category=="neurological",]),
+          nrow(critical_DNT_effects[endpoint_category=="cholinesterase",]), 
+          nrow(critical_DNT_effects[endpoint_category=="developmental",]),
+          nrow(critical_DNT_effects[endpoint_category=="reproductive",]),
+          nrow(critical_DNT_effects[endpoint_category=="systemic",]),
+          nrow(critical_DNT_effects[endpoint_category=="neurological",]))
+
+NON <- c(length(unique(new.wo.effects[study_type=="NON",]$study_id)),
+          length(unique(new.effects[study_type=="NON",]$study_id)), 
+          length(unique(new.wo.effects[study_type=="NON",]$chemical_id)),
+          nrow(new.wo.effects[study_type=="NON",]), 
+          nrow(new.effects[study_type=="NON",]),  
+          length(unique(new.effects[study_type=="NON",]$dtg_id)), 
+          nrow(unique_NON_effects[endpoint_category=="cholinesterase",]), 
+          nrow(unique_NON_effects[endpoint_category=="developmental",]),
+          nrow(unique_NON_effects[endpoint_category=="reproductive",]),
+          nrow(unique_NON_effects[endpoint_category=="systemic",]), 
+          nrow(unique_NON_effects[endpoint_category=="neurological",]),
+          nrow(critical_NON_effects[endpoint_category=="cholinesterase",]), 
+          nrow(critical_NON_effects[endpoint_category=="developmental",]),
+          nrow(critical_NON_effects[endpoint_category=="reproductive",]),
+          nrow(critical_NON_effects[endpoint_category=="systemic",]),
+          nrow(critical_NON_effects[endpoint_category=="neurological",]))
+
+Table <- data.frame(Output, DNT, NON)
+
+datatable(Table,
+          filter='top', 
+          options=list(pageLength = 16,searching=FALSE, autoWidth=FALSE,  scrollX=TRUE, initComplete = JS(
+    "function(settings, json) {",
+    "$('body').css({'font-family': 'Calibri'});",
+    "}"
+  )))
+  
+```
+
+## Neurological Endpoints {.tabset .tabset-fade .tabset-pills}
+
+The following section explore the types of 'neurological' effects curated within offspring generations:
+
+### Treatment Related Effects
+
+```{r DNT-effects-data_subset, warning=FALSE}
+#subset to only effects within the neurological endpoint category in non-maternal dose groups
+neuro.effects <- new.effects[endpoint_category == "neurological" & generation != "F0",]
+
+#subset by critical or treatment related effects
+neuro.tr.effects <- neuro.effects[treatment_related==TRUE,]
+neuro.cr.effects <- neuro.effects[critical_effect==TRUE,]
+```
+
+```{r DNT-tr-effects, warning=FALSE}
+#studies by treatment related effect types and targets
+tr_type_count <- neuro.tr.effects %>% distinct(study_id, endpoint_type,endpoint_target)%>% 
+   count(endpoint_type) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+tr_target_count <- neuro.tr.effects %>% distinct(study_id,endpoint_type,endpoint_target)%>% 
+   count(endpoint_target) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+```
+
+```{r, warning=FALSE, fig.height=8, fig.width=14}
+ggplot(tr_type_count, aes(x = "", y = perc, fill = endpoint_type)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Endpoint Type")) +
+  coord_polar(theta = "y") + theme_void()
+
+ggplot(tr_target_count, aes(x = "", y = perc, fill = endpoint_target)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Endpoint Target")) +
+  coord_polar(theta = "y") + theme_void()
+
+```
+
+Among treatment-related (i.e. statistically significant) neurological effects observed in offspring, the highest prevalence were:
+
+- Endpoint Type: neuropathology, learning memory, startle: weaning neonate, and startle: young adult
+- Endpoint Target: morphometrics, auditory startle amplitude, total session activity *related to motor activity*, acquisition *in learning*, horizontal *motor activity*, and retention *in learning*
+
+**NOTE**: italicized text was added clarify terms. Considering just endpoint type or target is often not enough information
+
+### Critical Effects
+
+```{r DNT-cr-effects, warning=FALSE}
+#studies by critical effect types and targets
+cr_type_count <- neuro.cr.effects %>% distinct(study_id, endpoint_type,endpoint_target)%>% 
+   count(endpoint_type) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+cr_target_count <- neuro.cr.effects %>% distinct(study_id,endpoint_type,endpoint_target)%>% 
+   count(endpoint_target) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+
+```
+
+```{r, warning=FALSE, fig.height=8, fig.width=14}
+ggplot(tr_type_count, aes(x = "", y = perc, fill = endpoint_type)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Endpoint Type")) +
+  coord_polar(theta = "y") + theme_void()
+
+ggplot(tr_target_count, aes(x = "", y = perc, fill = endpoint_target)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Endpoint Target")) +
+  coord_polar(theta = "y") + theme_void()
+
+```
+
+Among critical (i.e. adverse) neurological effects observed in offspring, the highest prevalence were:
+
+- Endpoint Type: neuropathology, motor activity: weaning neonate, startle: weaning neonate, motor activity: mid-lactation neonate #2, learning memory, and motor activity: mid-lactation neonate #1
+- Endpoint Target: total session activity *related to motor activity*, morphometrics, auditory startle amplitude, horizontal *motor activity*, acquisition *in learning*, and unusual behavior or appearance
+
+**NOTE**: italicized text was added clarify terms. Considering just endpoint type or target is often not enough information
+
+## Lifestages {.tabset .tabset-fade .tabset-pills}
+
+The following section explore the types of 'neurological' effects curated within offspring generations:
+
+### Treatment Related
+```{r DNT-tr-ls, warning=FALSE}
+#studies by treatment related effects by lifestage
+tr_ls_count <- neuro.tr.effects %>% distinct(study_id, life_stage)%>% 
+   count(life_stage) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+```
+
+```{r, warning=FALSE, fig.height=8, fig.width=14}
+ggplot(tr_ls_count, aes(x = "", y = perc, fill = life_stage)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Life Stage")) +
+  coord_polar(theta = "y") + theme_void()
+```
+
+Among treatment-related (i.e. statistically significant) neurological effects observed in offspring, the highest prevalence lifestages were: Young Adult (PND46-90), Weaning Neonate (PND18-22), and 	Mid-lactation Neonate (PND8-17)
+
+### Critical Effects
+```{r DNT-cr-ls, warning=FALSE}
+#studies by treatment related effects by lifestage
+cr_ls_count <- neuro.cr.effects %>% distinct(study_id, life_stage)%>% 
+   count(life_stage) %>% 
+   ungroup() %>% 
+   mutate(perc = `n` / sum(`n`)) %>% 
+   arrange(perc) %>%
+   mutate(labels = scales::percent(perc))
+
+```
+
+```{r, warning=FALSE, fig.height=8, fig.width=14}
+ggplot(cr_ls_count, aes(x = "", y = perc, fill = life_stage)) +
+  geom_bar(stat="identity", color="black") +
+  ggrepel::geom_label_repel(aes(label = labels),
+                            position = position_stack(vjust = .5),
+                            show.legend = FALSE, fontface='bold', color='black', size=10)+
+  scale_fill_viridis_d() +
+  guides(fill = guide_legend(title = "Life Stage")) +
+  coord_polar(theta = "y") + theme_void()
+
+
+```
+
+Among critical (i.e. adverse) neurological effects observed in offspring, the highest prevalence lifestages were: Mid-lactation Neonate (PND8-17), Weaning Neonate (PND18-22), and Young Adult (PND46-90)
+
+# Data Access
+
+The .sql export of ToxRefDB 3.0 and summary files are available for public download here: https://clowder.edap-cluster.com/datasets/61147fefe4b0856fdc65639b#folderId=6850327be4b096bca8848301. See User Guide for installation instructions and example queries.
+
+ToxRefDB is also accessible via a number of online tools:
+
+## CCD
+
+Data from ToxRefDB is summarized in the Toxicity Value Database (ToxValDB), including inferred NEL and NOAEL effect levels based on the reported LEL and LOAEL, respectively. These dose response summary values are accessible via the [CompTox Chemicals Dashboard (CCD)](https://comptox.epa.gov/dashboard/).ToxRefDB v3.0 values will be incorporated in the next ToxValDB release, as far as is practicably feasible. An image of the CCD Hazard tab for Bisphenol A is depicted below: 
+
+<center>![](C:/Users/mfeshuk/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/ToxRef-Internal/ToxRefDB_misc/v3_0_files/img/bpa_hazard_tab.png)</center>
+
+<a href="https://comptox.epa.gov/dashboard/batch-search"><img src="C:/Users/mfeshuk/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/ToxRef-Internal/ToxRefDB_misc/v3_0_files/img/batch_search.png" width="500" align="center" style="float: right; margin-left: 10px; margin-bottom: 10px;"/></a>
+
+ToxRefDB effects data are also available via [Batch Search](https://comptox.epa.gov/dashboard/batch-search) as an Enhanced Data Sheet option, wherein users can export all effects data for a given chemical if available. NOTE: There may be differences in the data given data versions of ToxRefDB utilized by the tool.
+
+## CTX Hazard API
+
+To expand user accessibility, ToxRefDB will be available via the [CTX Hazard API](https://api-ccte.epa.gov/docs/hazard.html). The [CTX API Documentation](https://www.epa.gov/comptox-tools/computational-toxicology-and-exposure-apis) provides more information on use and versioning. The following endpoints are available:
+
+-	**Effects**: Export of all extracted dose-treatment group-effect information from ToxRefDB for the chemicals, studies, or study types listed in the input. This view is also available as an enhanced data sheet using the batch search capability within the CompTox Chemicals Dashboard.
+- **Data**: Export of all extracted dose-treatment group-effect information as well as doses not eliciting effects from ToxRefDB for chemicals, studies, or study types listed in the input.
+- **Obs**: Export of all observations and endpoint observation status according to a relevant guideline profile for chemicals, studies, or study types listed in the input. Given ToxRefDB curations are guideline studies with specific testing requirements, guideline profiles are used to populate a list of observations that should be reported and tested within the study, i.e. endpoint observation status. Endpoint Observation status enables automated distinction of true negatives (i.e. tested with no effect observed) and better understanding of false negative (i.e. missing) effects.
+- **Summary**: Export of summary chemical and study level metadata available within ToxRefDB.
+
+# Reproducibility {.tabset .tabset-fade .tabset-pills}
+
+## Session Info
+
+This is the R session environment and package information used to create this RMarkdown release note.
+
+```{r session, warning=FALSE}
+print(sessionInfo())
+```
+
+## File Export
+
+This is code used to export the file with study-chemical level information accompanying the ToxRefDB v3.0 database release. Note, this includes studies with incomplete, qualitative curation (indicated with processed=FALSE). An export of the ToxRefDB data dictionary is also provided.
+
+```{r file-export, warning=FALSE, eval=FALSE}
+#study-chem summary
+study_chem <- dbGetQuery(con, "SELECT *, study.* FROM prod_toxrefdb_3_0.chemical
+                      INNER JOIN prod_toxrefdb_3_0.study on study.chemical_id=chemical.chemical_id;")
+
+write.xlsx(study_chem, keepNA=TRUE, file='toxrefdb_3_0_study_chem_summary.xlsx')
+
+#data dictionary
+dd <- dbGetQuery(con, "SELECT * FROM prod_toxrefdb_3_0.toxrefdb_dd;")
+
+write.xlsx(dd, keepNA=TRUE, file='toxrefdb_3_0_dd.xlsx')
+```
