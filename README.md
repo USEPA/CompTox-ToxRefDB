@@ -109,9 +109,11 @@ referenced files below:
     this file helpful for understanding joins and foreign key
     constraints to extract information from ToxRefDB v3.0. Consider
     reviewing the user guide for example SQL queries.
--   toxrefdb_3\_0.sql: The .sql dump file entire v3.0 database is
-    available as a (.sql) downloadable for mounting to a database
-    server.
+-   toxrefdb_3\_0.sql: The .sql dump file of the entire v3.0 database is
+    available. ToxRefDB v3.0 is a generic SQL export, therefore can
+    effectively bridge the gap between different database GUIs. Install
+    instructions and example queries for the PostgreSQL format are in
+    scope of the user guide.
 -   toxrefdb_3\_0_pod.csv: This .csv flat file presents summary-level
     point of departure values for all ToxRefDB studies indicated with
     processed=TRUE.

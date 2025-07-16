@@ -48,7 +48,7 @@ This repository was updated to serve ToxRefDB v3.0, however past versions are al
 * toxrefdb_3_0_release_note.html: This interactive .html report summarizes and explores data available in ToxRefDB v3.0.
 * toxrefdb_3_0_study_chemical_summary.xlsx: This .xlsx summary flat file provides study and chemical metadata for all curated information in ToxRefDB v3.0. This file can be useful for understanding the chemical and study coverage of the current database. Chemical and study tables were joined to create this file.
 * toxrefdb_3_0_erd.png: This .png file visualizes the entity relation diagram (ERD) for the ToxRefDB v3.0 database schema. Users may find this file helpful for understanding joins and foreign key constraints to extract information from ToxRefDB v3.0. Consider reviewing the user guide for example SQL queries.
-* toxrefdb_3_0.sql: The .sql dump file entire v3.0 database is available as a (.sql) downloadable for mounting to a database server. 
+* toxrefdb_3_0.sql: The .sql dump file of the entire v3.0 database is available. ToxRefDB v3.0 is a generic SQL export, therefore can effectively bridge the gap between different database GUIs. Install instructions and example queries for the PostgreSQL format are in scope of the user guide.
 * toxrefdb_3_0_pod.csv: This .csv flat file presents summary-level point of departure values for all ToxRefDB studies indicated with processed=TRUE.
 
 This repository also includes the following scripts relevant to ToxRefDB v3.0: 
