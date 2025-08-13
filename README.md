@@ -48,9 +48,9 @@ found here: <https://doi.org/10.23645/epacomptox.6062545.v4>.
 ### Summary of ToxRefDB v3.0
 
 ToxRefDB v3.0 contains summary information from 6341 guideline or
-guideline-like human health relevant studies for over 1228. The
-quantitative (i.e. dose-response) data has now been completed for 4320
-studies (indicated with processed=TRUE) with plans to extract and
+guideline-like human health relevant studies for over 1228 chemicals.
+The quantitative (i.e. dose-response) data has now been completed for
+4320 studies (indicated with processed=TRUE) with plans to extract and
 release the remaining data in subsequent database versions.
 
 ToxRefDB v3.0 represents the next iteration of the ToxRefDB project
@@ -93,14 +93,14 @@ versions are also available. Visit
 to download the complete database release package, including the
 referenced files below:
 
--   toxrefdb_3\_0_user_guide.pdf: This file provides information about
-    the database development, database contents, data dictionary for all
-    tables and fields, and example queries to extract information from
-    the database.
+-   [toxrefdb_3\_0_user_guide.pdf](https://nepis.epa.gov/Exe/ZyPDF.cgi/P101HD3R.PDF?Dockey=P101HD3R.PDF):
+    This file provides information about the database development,
+    database contents, data dictionary for all tables and fields, and
+    example queries to extract information from the database.
 -   [toxrefdb_3\_0_release_note.html](https://clowder.edap-cluster.com/files/688cbad9e4b02565bc3f8be7?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301):
     This interactive .html report summarizes and explores data available
     in ToxRefDB v3.0.
--   [toxrefdb_3\_0_study_chemical_summary.xlsx](https://clowder.edap-cluster.com/files/688cbad9e4b02565bc3f8be6?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301):
+-   [toxrefdb_3\_0_study_chemical_summary.xlsx](https://clowder.edap-cluster.com/files/689c9b5fe4b025654d12f40c?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301):
     This .xlsx summary flat file provides study and chemical metadata
     for all curated information in ToxRefDB v3.0. This file can be
     useful for understanding the chemical and study coverage of the

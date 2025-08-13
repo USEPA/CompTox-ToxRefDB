@@ -28,7 +28,7 @@ ToxRefDB v2.1 represented a minor update of ToxRefDB v2.0 to address issues disc
 
 ### Summary of ToxRefDB v3.0
 
-ToxRefDB v3.0 contains summary information from 6341 guideline or guideline-like human health relevant studies for over 1228. The quantitative (i.e. dose-response) data has now been completed for 4320 studies (indicated with processed=TRUE) with plans to extract and release the remaining data in subsequent database versions.
+ToxRefDB v3.0 contains summary information from 6341 guideline or guideline-like human health relevant studies for over 1228 chemicals. The quantitative (i.e. dose-response) data has now been completed for 4320 studies (indicated with processed=TRUE) with plans to extract and release the remaining data in subsequent database versions.
 
 ToxRefDB v3.0 represents the next iteration of the ToxRefDB project featuring several key updates:
 
@@ -44,9 +44,9 @@ ToxRefDB v3.0 represents the next iteration of the ToxRefDB project featuring se
 
 This repository was updated to serve ToxRefDB v3.0, however past versions are also available. Visit [Clowder](https://clowder.edap-cluster.com/datasets/61147fefe4b0856fdc65639b#folderId=6850327be4b096bca8848301) to download the complete database release package, including the referenced files below:
 
-* toxrefdb_3_0_user_guide.pdf: This file provides information about the database development, database contents, data dictionary for all tables and fields, and example queries to extract information from the database.
+* [toxrefdb_3_0_user_guide.pdf](https://nepis.epa.gov/Exe/ZyPDF.cgi/P101HD3R.PDF?Dockey=P101HD3R.PDF): This file provides information about the database development, database contents, data dictionary for all tables and fields, and example queries to extract information from the database.
 * [toxrefdb_3_0_release_note.html](https://clowder.edap-cluster.com/files/688cbad9e4b02565bc3f8be7?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): This interactive .html report summarizes and explores data available in ToxRefDB v3.0.
-* [toxrefdb_3_0_study_chemical_summary.xlsx](https://clowder.edap-cluster.com/files/688cbad9e4b02565bc3f8be6?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): This .xlsx summary flat file provides study and chemical metadata for all curated information in ToxRefDB v3.0. This file can be useful for understanding the chemical and study coverage of the current database. Chemical and study tables were joined to create this file.
+* [toxrefdb_3_0_study_chemical_summary.xlsx](https://clowder.edap-cluster.com/files/689c9b5fe4b025654d12f40c?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): This .xlsx summary flat file provides study and chemical metadata for all curated information in ToxRefDB v3.0. This file can be useful for understanding the chemical and study coverage of the current database. Chemical and study tables were joined to create this file.
 * [toxrefdb_3_0_erd.png](https://clowder.edap-cluster.com/files/688cbad9e4b02565bc3f8bd8?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): This .png file visualizes the entity relation diagram (ERD) for the ToxRefDB v3.0 database schema. Users may find this file helpful for understanding joins and foreign key constraints to extract information from ToxRefDB v3.0. Consider reviewing the user guide for example SQL queries.
 * [toxrefdb_3_0.dump](https://clowder.edap-cluster.com/files/688cbadde4b02565bc3f8c53?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): The .sql dump file of the entire v3.0 database is available. ToxRefDB v3.0 is a generic SQL export, therefore can effectively bridge the gap between different database GUIs. Install instructions and example queries for the PostgreSQL format are in scope of the user guide.
 * [toxrefdb_3_0_pod.csv](https://clowder.edap-cluster.com/files/688cbadae4b02565bc3f8c07?dataset=61147fefe4b0856fdc65639b&space=&folder=6850327be4b096bca8848301): This .csv flat file presents summary-level point of departure values for all ToxRefDB studies indicated with processed=TRUE.
